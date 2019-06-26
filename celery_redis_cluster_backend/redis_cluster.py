@@ -25,7 +25,8 @@ from celery.utils.time import humanize_seconds
 from celery.backends.base import KeyValueStoreBackend
 
 # try:
-from rediscluster.client import RedisCluster
+# from rediscluster.client import RedisCluster
+from rediscluster import RedisCluster
 # from kombu.transport.redis import get_redis_error_classes
 # except ImportError:                 # pragma: no cover
 #    RedisCluster = None                    # noqa
@@ -121,7 +122,7 @@ class RedisClusterBackend(KeyValueStoreBackend):
 
     def _set(self, key, value):
         if hasattr(self, 'expires'):
-            self.client.setex(key, value, self.expires)
+            self.client.setex(key, self.expires, value)
         else:
             self.client.set(key, value)
 
@@ -209,6 +210,7 @@ class RedisClusterBackend(KeyValueStoreBackend):
 
     @cached_property
     def client(self):
+        print(self.conn_params)
         return RedisCluster(**self.conn_params)
 
     def __reduce__(self, args=(), kwargs={}):
@@ -222,16 +224,14 @@ if __name__ == '__main__':
 
     class Config:
         CELERY_ENABLE_UTC = True
-        CELERY_TIMEZONE = 'Europe/Istanbul'
+        CELERY_TIMEZONE = 'Asia/Bangkok'
         CELERY_REDIS_CLUSTER_SETTINGS = {'startup_nodes': [
-            {"host": "195.175.249.97", "port": "6379"},
-            {"host": "195.175.249.98", "port": "6379"},
-            {"host": "195.175.249.99", "port": "6380"}
+            {"host": "localhost", "port": "7000"}
         ]}
 
     app = Celery()
     app.config_from_object(Config)
 
     rb = RedisClusterBackend(app=app)
-    rb.set('a', 'b1')
+    rb.set('a', 'a_value')
     print(rb.get('a'))
